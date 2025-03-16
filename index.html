@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeSync Lite</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/mode/css/css.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/codemirror.min.css">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>CodeSync Lite</h2>
+        <button id="toggleTheme"> 🌙 Toggle Theme</button>
+    </div>
+
+    <div class="main-content">
+        <h1>Code Debugger</h1>
+
+        <div class="editor-container">
+            <textarea id="codeInput"></textarea>
+        </div>
+
+        <div class="buttons">
+            <button onclick="checkErrors()">🔍 Check Code</button>
+            <button onclick="runCode()">🚀 Run Code</button>
+        </div>
+
+        <h2>Errors Found:</h2>
+        <ul id="errorList"></ul>
+
+        <h2>Live Preview:</h2>
+        <div id="previewContainer">
+            <iframe id="outputFrame"></iframe>
+        </div>
+    </div>
+
+    <!-- JavaScript Moved Here -->
+    <script>
+        // Initialize CodeMirror Editor
+        let editor = CodeMirror.fromTextArea(document.getElementById("codeInput"), {
+            mode: "htmlmixed",
+            lineNumbers: true,
+            theme: "default",
+            matchBrackets: true
+        });
+
+        function checkErrors() {
+            let code = editor.getValue();
+            let errorList = document.getElementById("errorList");
+            errorList.innerHTML = "";
+
+            let errors = [];
+
+            // Check for unclosed tags
+            let tagStack = [];
+            let tagRegex = /<\/?([a-z]+)[^>]*>/g;
+            let match;
+            while ((match = tagRegex.exec(code)) !== null) {
+                let tagName = match[1];
+                if (!match[0].includes("/")) {
+                    tagStack.push(tagName);
+                } else {
+                    if (tagStack.length === 0 || tagStack[tagStack.length - 1] !== tagName) {
+                        errors.push(`❌ Unmatched closing tag: </${tagName}>`);
+                    } else {
+                        tagStack.pop();
+                    }
+                }
+            }
+            if (tagStack.length > 0) {
+                errors.push(`❌ Unclosed tag: <${tagStack[tagStack.length - 1]}>`);
+            }
+
+            // Display errors
+            if (errors.length > 0) {
+                errors.forEach(error => {
+                    let li = document.createElement("li");
+                    li.textContent = error;
+                    errorList.appendChild(li);
+                });
+            } else {
+                let li = document.createElement("li");
+                li.style.color = "green";
+                li.textContent = "✅ No syntax errors detected!";
+                errorList.appendChild(li);
+            }
+        }
+
+        function runCode() {
+            let code = editor.getValue();
+            let outputFrame = document.getElementById("outputFrame").contentWindow.document;
+            outputFrame.open();
+            outputFrame.write(code);
+            outputFrame.close();
+        }
+
+        // Dark Mode Toggle
+        document.getElementById("toggleTheme").addEventListener("click", () => {
+            document.body.classList.toggle("dark-mode");
+        });
+    </script>
+
+</body>
+</html>
